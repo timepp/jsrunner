@@ -1,0 +1,66 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>Javscript Runner</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <script type="text/javascript" src="thirdparty/jquery-2.1.4.min.js"></script>
+
+    <link rel="stylesheet" href="thirdparty/bootstrap.min.css" />
+    <script src="thirdparty/bootstrap.min.js"></script>
+
+    <link rel="stylesheet" href="thirdparty/bootstrap-select.min.css">
+    <script src="thirdparty/bootstrap-select.min.js"></script>
+
+    <link rel="stylesheet" href="jsrunner.css" />
+    <script src="jsrunner.js"></script>
+
+    <!-- put any js functions you want to run with UI below -->
+    <script type="text/javascript" src="js/windev_functions.js"></script>
+
+</head>
+
+<body>
+    <div id="mainpage">
+
+        <h3>Choose a function</h3>
+
+        <div class="input-group">
+            <span class="input-group-addon">Filter:</span>
+            <input id="funcfilter" class="form-control" type="text" />
+        </div>
+
+        <hr />
+
+        <table id="functions">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+
+    </div>
+
+    <div id="functionpage" style="display:none">
+
+        <button id="back" class="btn btn-success">BACK</button>
+        <p id="funcname"></p>
+        <p id="funcsummary"></p>
+        <p id="funcdesc"></p>
+
+        <div id="paramcontainer">
+
+        </div>
+
+        <button id="run" class="btn btn-danger">EXECUTE</button>
+
+    </div>
+
+</body>
+</html>

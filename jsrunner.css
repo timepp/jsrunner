@@ -1,0 +1,62 @@
+input[type=text] {
+    font-family: monospace;
+}
+
+select::-ms-expand {
+    width: 12px;
+    border: none;
+    background: #fff;
+}
+
+.active_nav {
+    background-color: deepskyblue;
+}
+
+.btn-razzle {
+    width: 160px !important;
+    margin-bottom: 10px;
+}
+
+body {
+    margin: 10px;
+    -ms-user-select: none; 
+    cursor: default;
+    font-family: monospace;
+}
+
+ul.dropdown-menu {
+    font-family: monospace;
+        
+}
+
+.clickable {
+    cursor: pointer;
+}
+
+:focus {
+    outline: 0;
+}
+
+table {
+    border: 2px solid darkgray;
+    border-collapse: collapse;
+    width: 100%;
+}
+
+tbody tr:hover {
+    background-color: rgb(255,224,224);
+}
+
+td, th {
+    border: 1px solid darkgray;
+    padding: 10px;
+}
+
+#funcname {
+    font-size: larger;
+}
+
+.paramdiv {
+    margin-top: 20px;
+    margin-bottom: 20px;
+}

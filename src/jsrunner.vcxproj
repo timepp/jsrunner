@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -11,12 +11,12 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\js\tps.js" />
-    <None Include="..\js\windev_functions.js" />
-    <None Include="..\thirdparty\jquery-2.1.4.js" />
-    <None Include="..\jsrunner.css" />
-    <None Include="..\jsrunner.html" />
-    <None Include="..\jsrunner.js" />
+    <None Include="js\windev_functions.js" />
+    <None Include="thirdparty\jquery-2.1.4.js" />
+    <None Include="jsrunner.css" />
+    <None Include="jsrunner.html" />
+    <None Include="jsrunner.js" />
+    <None Include="thirdparty\tps.js" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{A2DF4B5C-F0A8-4EB2-8784-B2ABC2A17955}</ProjectGuid>

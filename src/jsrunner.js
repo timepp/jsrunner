@@ -1,6 +1,14 @@
 /// <reference path="thirdparty/jquery-2.1.4.min.js" />
+/// <reference path="thirdparty/json2.js" />
+
+// TODO: javascript intellisense has problem if visual studio project file is not in root folder.
+//       The workaround is to use absolute paths
 
 var functions = {};
+var config = {
+    runhistory: {}
+};
+var configfile = shell ? shell.ExpandEnvironmentStrings("%APPDATA%\\jsrunner\\config.js") : "";
 
 function Main() {
     Init();
@@ -8,6 +16,64 @@ function Main() {
 }
 
 function Init() {
+
+    functions = GetRunnableFunctions();
+
+    $("#back").click(function () {
+        showMainpage();
+    });
+
+    $("#clearlog").click(function () {
+        $("#log").empty();
+    });
+
+    $("#funcfilter").keyup(function () {
+        FillFunctionTableWithFilter($(this).val());
+    });
+
+    LoadConfig();
+    tps.util.MergeProperty(functions, config.runhistory);
+
+    try {
+        tps.sys.AddToPath(tps.sys.processEnv, tps.sys.GetScriptDir() + "\\thirdparty");
+    } catch (e) { }
+
+    tps.log.AddHtmlElementDevice($("#log")[0]);
+}
+
+function LoadConfig() {
+    var tempconf;
+    try {
+        tempconf = JSON.parse(tps.file.ReadTextFileSimple(configfile));
+    } catch (e) {
+        tempconf = {};
+    }
+    tps.util.MergeProperty(config, tempconf);
+}
+
+function SaveConfig() {
+    try {
+        SaveRunHistoryToConfig();
+        tps.file.WriteTextFileSimple(JSON.stringify(config, null, 4), configfile);
+    } catch (e) { }
+}
+
+function SaveRunHistoryToConfig() {
+    $.each(functions, function (k, v) {
+        config.runhistory[k] = {params:[]};
+        var fr = config.runhistory[k];
+        $.each(v.params, function (i, p) {
+            fr.params.push({ name: p.name, value: p.value });
+        });
+    });
+}
+
+function ApplyRunHistoryFromConfig() {
+    tps.util.MergeProperty();
+}
+
+function GetRunnableFunctions() {
+    var funcs = {};
     var pps = Object.keys(window);
     for (var i in pps) {
         var fn = pps[i];
@@ -18,19 +84,11 @@ function Init() {
             if (jsdoc != null) {
                 var info = parseJsdoc(jsdoc);
                 info.name = fn;
-                functions[fn] = info;
+                funcs[fn] = info;
             }
         }
     }
-
-    $("#back").click(function () {
-        showMainpage();
-    });
-
-    $("#funcfilter").keyup(function () {
-        FillFunctionTableWithFilter($(this).val());
-    });
-
+    return funcs;
 }
 
 function FillFunctionTableWithFilter(filter) {
@@ -78,13 +136,15 @@ function ShowFunction(func) {
     $("#paramcontainer").empty();
 
     for (var i in func.params) {
-        var div = $("<div>").addClass("paramdiv");
+        var div = $("<div>").addClass("input-group");
         $("#paramcontainer").append(div);
 
         var param = func.params[i];
-        div.append($("<p>").text(param.name + ":" + param.description));
+        div.append($('<span class="input-group-addon">').text(param.description));
+
         if (param.type == "string") {
-            var textbox = $('<input class="form-control" type="text">');
+            if (param.value === null) param.value = "";
+            var textbox = $('<input class="form-control" type="text">').val(param.value);
             div.append(textbox);
             textbox.on("change", (function (p, t) {
                 return function() {
@@ -93,7 +153,8 @@ function ShowFunction(func) {
             })(param, textbox));
         }
         else if (param.type == "number") {
-            var textbox = $('<input class="form-control" type="text">').addClass("numeric-only");
+            if (param.value === null) param.value = "";
+            var textbox = $('<input class="form-control" type="text">').addClass("numeric-only").val(param.value);
             div.append(textbox);
             textbox.on("change", (function (p, t) {
                 return function () {
@@ -101,10 +162,35 @@ function ShowFunction(func) {
                 }
             })(param, textbox));
         }
+        else if (param.type.startsWith("string in list ")) {
+            var spec = param.type.substr(15).replace(/^\[(.*)\]$/, "$1");
+            var slist = [];
+            if (spec.endsWith("()")) {
+                slist = window[spec.substr(0, spec.length - 2)].apply(null);
+            } else {
+                slist = spec.split(" ");
+            }
+
+            // selection list here
+            if (param.value === null) param.value = slist[0];
+            var selectbox = $('<select class="form-control">');
+            div.append(selectbox);
+            $.each(slist, function (k, v) {
+                selectbox.append($("<option/>", { value: v, text: v }));
+            });
+            
+            selectbox.val(param.value);
+            selectbox.on("change", (function (p, t) {
+                return function () {
+                    p.value = t.val();
+                }
+            })(param, selectbox));
+        }
     }
 
     $("#run").unbind("click");
     $("#run").bind("click", function () {
+        SaveConfig();
         ExecuteFunction(func);
     });
 
@@ -142,7 +228,7 @@ function parseJsdoc(doc) {
         line = line.replace(/^\*\s+|^\*$/, "");
 
         if (line[0] == '@') {
-            var paramRegex = /^@param\s+(\{\S+\})?\s+(\S+)\s+(.*)$/ig;
+            var paramRegex = /^@param\s+(\{[^}]+\})?\s+(\S+)\s+(.*)$/ig;
             var result = paramRegex.exec(line);
             if (result != null) {
                 var param = {

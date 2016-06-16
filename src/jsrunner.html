@@ -15,10 +15,13 @@
     <script src="thirdparty/bootstrap-select.min.js"></script>
 
     <link rel="stylesheet" href="jsrunner.css" />
+    <script src="thirdparty/tps.js"></script>
+    <script src="thirdparty/json2.js"></script>
     <script src="jsrunner.js"></script>
 
     <!-- put any js functions you want to run with UI below -->
-    <script type="text/javascript" src="js/windev_functions.js"></script>
+    <script type="text/javascript" src="c:/cloud/softconf/windev_functions.js"></script>
+    <script type="text/javascript" src="sample.js"></script>
 
 </head>
 
@@ -48,17 +51,32 @@
     </div>
 
     <div id="functionpage" style="display:none">
-
-        <button id="back" class="btn btn-success">BACK</button>
         <p id="funcname"></p>
         <p id="funcsummary"></p>
         <p id="funcdesc"></p>
 
-        <div id="paramcontainer">
+        <hr />
 
+        <div class="panel panel-default">
+            <div class="panel-heading">Parameters</div>
+            <div class="panel-body" id="paramcontainer">
+            </div>
         </div>
 
         <button id="run" class="btn btn-danger">EXECUTE</button>
+        <button id="back" class="btn btn-success">BACK</button>
+        
+        <hr />
+        
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                Run log:
+                <button id="clearlog" class="btn btn-default btn-sm pull-right">Clear Log</button>
+            </div>
+            <div class="panel-body" id="log">
+
+            </div>
+        </div>
 
     </div>
 

@@ -53,10 +53,29 @@ td, th {
 }
 
 #funcname {
-    font-size: larger;
+    font-size: x-large;
+    text-shadow: 2px 2px 3px rgba(0,0,0,0.5);
+}
+
+#funcsummary {
+    font-weight: bold;
 }
 
 .paramdiv {
     margin-top: 20px;
     margin-bottom: 20px;
+}
+
+
+#log {
+    height: 300px;
+    overflow: scroll;
+    -ms-user-select: element;
+    cursor: text;
+}
+
+.log_time {
+    padding-right: 10px;
+    margin-right: 10px;
+    background-color: wheat;
 }

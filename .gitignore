@@ -1,5 +1,6 @@
+Debug/
 *.gch
 *.pch
 *.suo
-/vs/jsrunner.VC.db
-/vs/.vs
+*.VC.*
+.vs/

@@ -85,7 +85,18 @@ if (typeof String.prototype.endsWith !== 'function') {
         return this.indexOf(suffix, this.length - suffix.length) !== -1;
     };
 }
-
+if (typeof String.prototype.splitHead !== 'function') {
+    String.prototype.splitHead = function (splitter) {
+        var pos = this.indexOf(splitter);
+        return pos == -1 ? null : [this.substr(0, pos), this.substr(pos + splitter.length)];
+    };
+}
+if (typeof String.prototype.splitTail !== 'function') {
+    String.prototype.splitTail = function (splitter) {
+        var pos = this.lastIndexOf(splitter);
+        return pos == -1 ? null : [this.substr(0, pos), this.substr(pos + splitter.length)];
+    };
+}
 
 (function () {
 

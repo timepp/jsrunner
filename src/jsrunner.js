@@ -4,6 +4,8 @@
 // TODO: javascript intellisense has problem if visual studio project file is not in root folder.
 //       The workaround is to use absolute paths
 
+// tps.sys.RestartHTA(true, true);
+
 var functions = {};
 var config = {
     runhistory: {}
@@ -128,10 +130,121 @@ function FillFunctionTable(funcs) {
     }
 }
 
+// returns: [{type:string, value, startPos, endPos}]
+function splitJsDocToTags(str) {
+    var result = [];
+    var pos = 0;
+    var processedPos = 0;
+    while (pos < str.length) {
+        var tag = null;
+
+        if (str.charAt(pos) == '\n' && str.charAt(pos+1) == '\n') {
+            tag = {type:"br", startPos: pos, endPos: pos + 2};
+        } else if (str.charAt(pos) == '\n' && str.charAt(pos + 1) == '-') {
+            // list
+            pos++;
+            var p = pos;
+            var arr = [];
+            for (; ;) {
+                var q = str.indexOf("\n", p);
+                if (q == -1) {
+                    q = str.length;
+                    arr.push(str.substr(p+1, q - p - 1));
+                    p = str.length;
+                    break;
+                }
+
+                arr.push(str.substr(p+2, q - 2 - p));
+
+                p = q + 1;
+                if (str.charAt(p) != '-') {
+                    break;
+                }
+            }
+            tag = {
+                type: "list",
+                startPos: pos,
+                endPos: p,
+                value: arr
+            }
+
+        } else if (str.substr(pos, 7) == "{@link ") {
+            var pos2 = str.indexOf("}", pos);
+            if (pos2 != -1) {
+                var content = str.substr(pos + 7, pos2 - pos - 7);
+                var arr = content.splitHead("|") || content.splitHead(" ") || [content, content];
+                tag = {
+                    type: "link",
+                    startPos: pos,
+                    endPos: pos2 + 1,
+                    value: {
+                        url: arr[0],
+                        text: arr[1]
+                    }
+                };
+            }
+        } else if (str.substr(pos, 7) == "{@call ") {
+            var pos2 = str.indexOf("}", pos);
+            if (pos2 != -1) {
+                var content = str.substr(pos + 7, pos2 - pos - 7);
+                var text = window[content].apply();
+                tag = { type: "status", startPos: pos, endPos: pos2 + 1, value: text };
+            }
+        }
+
+        if (tag != null) {
+            if (pos > processedPos) {
+                result.push({type:"text", startPos: processedPos, endPos: pos, value: str.substr(processedPos, pos - processedPos)});
+            }
+            result.push(tag);
+            pos = tag.endPos;
+            processedPos = tag.endPos;
+        } else {
+            pos++;
+        }
+    }
+
+    if (pos > processedPos) {
+        result.push({type:"text", startPos: processedPos, endPos: pos, value: str.substr(processedPos, pos - processedPos)});
+    }
+
+    return result;
+}
+
+function createNodeFromJsDoc(str) {
+    var $div = $("<div>");
+    var tags = splitJsDocToTags(str);
+
+    for (var i in tags) {
+        var tag = tags[i];
+        if (tag.type == "text") {
+            $div.append($("<span>").text(tag.value));
+        } else if (tag.type == "br") {
+            $div.append($("<p>"));
+        } else if (tag.type == "link") {
+            $div.append($("<a>", {
+                href: tag.value.url,
+                text: tag.value.text
+            }));
+        } else if (tag.type == "status") {
+            $div.append($('<span class="status">').text(tag.value));
+        } else if (tag.type == "list") {
+            var $ul = $("<ul>");
+            $.each(tag.value, function (k, v) {
+                $ul.append($("<li>").text(v));
+            });
+            $div.append($ul);
+        }
+    }
+
+    return $div;
+}
+
 function ShowFunction(func) {
     $("#funcname").text(func.name);
     $("#funcsummary").text(func.summary);
-    $("#funcdesc").text(func.description);
+    $("#funcdesc").empty();
+    $("#funcdesc").append(createNodeFromJsDoc(func.description));
 
     $("#paramcontainer").empty();
 
@@ -162,8 +275,8 @@ function ShowFunction(func) {
                 }
             })(param, textbox));
         }
-        else if (param.type.startsWith("string in list ")) {
-            var spec = param.type.substr(15).replace(/^\[(.*)\]$/, "$1");
+        else if (param.type.startsWith("string in ")) {
+            var spec = param.type.substr(10).replace(/^\[(.*)\]$/, "$1");
             var slist = [];
             if (spec.endsWith("()")) {
                 slist = window[spec.substr(0, spec.length - 2)].apply(null);
@@ -192,6 +305,10 @@ function ShowFunction(func) {
     $("#run").bind("click", function () {
         SaveConfig();
         ExecuteFunction(func);
+
+        // update func description in case there is any status inside it.
+        $("#funcdesc").empty();
+        $("#funcdesc").append(createNodeFromJsDoc(func.description));
     });
 
     showFunctionPage();
@@ -202,7 +319,12 @@ function ExecuteFunction(func) {
     for (var i in func.params) {
         args.push(func.params[i].value);
     }
-    window[func.name].apply(null, args);
+
+    try {
+        window[func.name].apply(null, args);
+    } catch (e) {
+        tps.log.Error(e.toString());
+    }
 }
 
 function showMainpage() {

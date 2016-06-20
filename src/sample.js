@@ -8,9 +8,16 @@ function TestFunction1(name, value) {
     alert("function TestFunction1 called" + name + value);
 }
 
+function getMaxFabonacci() {
+    return "1022";
+}
+
 function Fabonacci(n) {
     /** Compute the nth fabonacci number
      *  The fabonacci sequence is: 1, 1, 2, 3, 5, 8, 13, 21, ...
+     *
+     *  Currently the largest known number is {@call getMaxFabonacci}.
+     *  See {@link http://www.baidu.com baidu} for more details.
      *  
      *  @param {number} n - the index, started from 1. for example, the 4th number is 3.
      */

@@ -21,7 +21,7 @@ body {
     margin: 10px;
     -ms-user-select: none; 
     cursor: default;
-    font-family: monospace;
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
 }
 
 ul.dropdown-menu {
@@ -72,10 +72,19 @@ td, th {
     overflow: scroll;
     -ms-user-select: element;
     cursor: text;
+    font-size: small;
 }
 
 .log_time {
     padding-right: 10px;
     margin-right: 10px;
     background-color: wheat;
+}
+
+.log_error {
+    color: red;
+}
+
+.status {
+    color: blue;
 }

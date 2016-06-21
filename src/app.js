@@ -14,7 +14,9 @@ var configfile = shell ? shell.ExpandEnvironmentStrings("%APPDATA%\\jsrunner\\co
 
 function Main() {
     Init();
+    LoadConfig();
     FillFunctionTableWithFilter("");
+    tps.util.MergeProperty(functions, config.runhistory);
 }
 
 function Init() {
@@ -32,9 +34,6 @@ function Init() {
     $("#funcfilter").keyup(function () {
         FillFunctionTableWithFilter($(this).val());
     });
-
-    LoadConfig();
-    tps.util.MergeProperty(functions, config.runhistory);
 
     try {
         tps.sys.AddToPath(tps.sys.processEnv, tps.sys.GetScriptDir() + "\\thirdparty");

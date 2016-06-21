@@ -11,19 +11,19 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <None Include="app.css" />
+    <None Include="app.html" />
+    <None Include="app.js" />
     <None Include="js\windev_functions.js" />
     <None Include="sample.js" />
     <None Include="thirdparty\jquery-2.1.4.js" />
-    <None Include="jsrunner.css" />
-    <None Include="jsrunner.html" />
-    <None Include="jsrunner.js" />
     <None Include="thirdparty\tps.js" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{A2DF4B5C-F0A8-4EB2-8784-B2ABC2A17955}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>jsrunner</RootNamespace>
-    <ProjectName>jsrunner</ProjectName>
+    <ProjectName>only for edit and debug</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">

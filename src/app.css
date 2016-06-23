@@ -19,6 +19,7 @@ select::-ms-expand {
 
 body {
     margin: 10px;
+    margin-right: 20px;
     -ms-user-select: none; 
     cursor: default;
     font-family: Verdana, Geneva, Tahoma, sans-serif;
@@ -87,4 +88,8 @@ td, th {
 
 .status {
     color: blue;
+}
+
+ul {
+    font-family: monospace;
 }

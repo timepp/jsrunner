@@ -4,9 +4,10 @@
 // TODO: javascript intellisense has problem if visual studio project file is not in root folder.
 //       The workaround is to use absolute paths
 
-// tps.sys.RestartHTA(true, true);
+tps.sys.RestartHTA(true, true);
 
 var functions = {};
+var activeFunction = null;
 var config = {
     runhistory: {}
 };
@@ -16,7 +17,7 @@ function Main() {
     Init();
     LoadConfig();
     FillFunctionTableWithFilter("");
-    tps.util.MergeProperty(functions, config.runhistory);
+    tps.util.UpdateProperty(functions, config.runhistory);
 }
 
 function Init() {
@@ -34,6 +35,17 @@ function Init() {
     $("#funcfilter").keyup(function () {
         FillFunctionTableWithFilter($(this).val());
     });
+
+    $("#run").bind("click", function () {
+        $(this).prop("disabled", true);
+        SaveConfig();
+        ExecuteFunction(activeFunction);
+
+        // update func description in case there is any status inside it.
+        ShowFunction(activeFunction);
+        $(this).prop("disabled", false);
+    });
+
 
     try {
         tps.sys.AddToPath(tps.sys.processEnv, tps.sys.GetScriptDir() + "\\thirdparty");
@@ -61,10 +73,10 @@ function SaveConfig() {
 
 function SaveRunHistoryToConfig() {
     $.each(functions, function (k, v) {
-        config.runhistory[k] = {params:[]};
+        config.runhistory[k] = { params: {}};
         var fr = config.runhistory[k];
         $.each(v.params, function (i, p) {
-            fr.params.push({ name: p.name, value: p.value });
+            fr.params[i] = { value: p.value };
         });
     });
 }
@@ -124,12 +136,16 @@ function FillFunctionTable(funcs) {
             $("<tr>").addClass("clickable")
             .append($("<td>").text(func.name))
             .append($("<td>").text(func.summary))
-            .click((function (f) { return function () { ShowFunction(f); }})(func))
+            .click((function (f) {
+                return function () {
+                    ShowFunction(f);
+                    showFunctionPage();
+                }})(func))
             );
     }
 }
 
-// returns: [{type:string, value, startPos, endPos}]
+// returns: [{type:string, value, style, startPos, endPos}]
 function splitJsDocToTags(str) {
     var result = [];
     var pos = 0;
@@ -182,12 +198,18 @@ function splitJsDocToTags(str) {
                     }
                 };
             }
-        } else if (str.substr(pos, 7) == "{@call ") {
+        } else if (str.substr(pos, 5) == "{@js ") {
             var pos2 = str.indexOf("}", pos);
             if (pos2 != -1) {
-                var content = str.substr(pos + 7, pos2 - pos - 7);
-                var text = window[content].apply();
-                tag = { type: "status", startPos: pos, endPos: pos2 + 1, value: text };
+                var content = str.substr(pos + 5, pos2 - pos - 5);
+                var val;
+                eval("val =" + content);
+                if ($.isArray(val)) {
+                    tag = { type: "list", style: "status", startPos: pos, endPos: pos2 + 1, value: val };
+                } else {
+                    if (!val) val = "";
+                    tag = { type: "text", style: "status", startPos: pos, endPos: pos2 + 1, value: val.toString() };
+                }
             }
         }
 
@@ -216,27 +238,39 @@ function createNodeFromJsDoc(str) {
 
     for (var i in tags) {
         var tag = tags[i];
+        var $node;
         if (tag.type == "text") {
-            $div.append($("<span>").text(tag.value));
+            $node = $("<span>").text(tag.value);
         } else if (tag.type == "br") {
-            $div.append($("<p>"));
+            $node = $("<p>");
         } else if (tag.type == "link") {
-            $div.append($("<a>", {
+            $node = $("<a>", {
                 href: tag.value.url,
                 text: tag.value.text
-            }));
-        } else if (tag.type == "status") {
-            $div.append($('<span class="status">').text(tag.value));
-        } else if (tag.type == "list") {
-            var $ul = $("<ul>");
-            $.each(tag.value, function (k, v) {
-                $ul.append($("<li>").text(v));
             });
-            $div.append($ul);
+        } else if (tag.type == "status") {
+            $node = $('<span class="status">').text(tag.value);
+        } else if (tag.type == "list") {
+            $node = $("<ul>");
+            $.each(tag.value, function (k, v) {
+                $node.append($("<li>").text(v));
+            });
         }
+
+        if (tag.style) {
+            $node.addClass(tag.style);
+        }
+        $div.append($node);
     }
 
     return $div;
+}
+
+function stripLeft(str, matcher) {
+    if (str.startsWith(matcher)) {
+        return str.substr(matcher.length);
+    }
+    return null;
 }
 
 function ShowFunction(func) {
@@ -246,7 +280,7 @@ function ShowFunction(func) {
     $("#funcdesc").append(createNodeFromJsDoc(func.description));
 
     $("#paramcontainer").empty();
-
+    var spec = "";
     for (var i in func.params) {
         var div = $("<div>").addClass("input-group");
         $("#paramcontainer").append(div);
@@ -298,19 +332,38 @@ function ShowFunction(func) {
                 }
             })(param, selectbox));
         }
+        else if (spec = stripLeft(param.type, "string with recommendation ")) {
+            spec = tps.util.RemoveQuote(spec);
+            var textbox = $('<input class="form-control" type="text">').val(param.value);
+            div.append(textbox);
+            var $recommendationGroup = $('<div class="input-group-btn">');
+            var recommends = spec.split(",");
+            $.each(recommends, function (i, v) {
+                v = v.trim();
+                if (v != "") {
+                    var arr = v.splitHead(":");
+                    var name = arr[0].trim();
+                    var url = arr[1].trim();
+                    var $btn = $('<button class="btn btn-default">').text(name);
+                    $btn.on("click", (function (p, t, s) {
+                        return function () {
+                            t.val(s);
+                            p.value = s;
+                        }
+                    })(param, textbox, url));
+                    $recommendationGroup.append($btn);
+                }
+            });
+            div.append($recommendationGroup);
+            textbox.on("change", (function (p, t) {
+                return function () {
+                    p.value = t.val();
+                }
+            })(param, textbox));
+        }
     }
 
-    $("#run").unbind("click");
-    $("#run").bind("click", function () {
-        SaveConfig();
-        ExecuteFunction(func);
-
-        // update func description in case there is any status inside it.
-        $("#funcdesc").empty();
-        $("#funcdesc").append(createNodeFromJsDoc(func.description));
-    });
-
-    showFunctionPage();
+    activeFunction = func;
 }
 
 function ExecuteFunction(func) {
@@ -339,39 +392,44 @@ function showFunctionPage() {
 }
 
 /** return:
- *  { summary: <string>, description: <string>, params: [] of { name: <string>, type: <string>, description: <string>, value: <string> }
+ *  { summary: <string>, description: <string>, params: { <param name>: {type: <string>, description: <string>, value: <string>} }
  */
 function parseJsdoc(doc) {
-    var info = {description:"", params:[]};
-    var lines = doc.split("\n");
-    for (var i in lines) {
-        var line = lines[i].trim();
-        line = line.replace(/^\*\s+|^\*$/, "");
+    var cleandoc = doc.replace(/\r/g, "");
+    cleandoc = cleandoc.replace(/\n[ \t]*\*/igm, "\n");
+    cleandoc = cleandoc.replace(/\n[ \t]*/igm, "\n");
+    if (!cleandoc.endsWith("\n"))
+        cleandoc += "\n";
 
-        if (line[0] == '@') {
-            var paramRegex = /^@param\s+(\{[^}]+\})?\s+(\S+)\s+(.*)$/ig;
-            var result = paramRegex.exec(line);
-            if (result != null) {
-                var param = {
-                    name: result[2],
-                    type: result[1].replace(/^{(.*)}$/, "$1"),
-                    description: result[3].replace(/^-\s+/, ""),
-                    value: null
-                };
-                info.params.push(param);
-            }
+    var info = { description: "", params: {} };
+    var paramRegex = /\n@param +(\{[^}]+\})? +(\S+) +([^\n]*)\n/igm;
+    var desc = "";
+    var startPos = 0;
+    var result;
+    while ((result = paramRegex.exec(cleandoc)) !== null) {
+        if (startPos < result.index) {
+            desc += cleandoc.substr(startPos, result.index);
         }
-        else {
-            if (!info.summary)
-                info.summary = line;
-            else {
-                info.description += line;
-                info.description += "\n";
-            }
-        }
+        startPos = paramRegex.lastIndex;
+        paramRegex.lastIndex--; // we matched both start "\n" and end "\n", here we need to step back
+        info.params[result[2]] = {
+            type: tps.util.RemoveQuote(result[1]),
+            description: result[3].replace(/^-\s+/, ""),
+            value: null
+        };
     }
 
-    info.description = info.description.trim();
+    if (startPos < cleandoc.length)
+        desc += cleandoc.substr(startPos);
+
+    var arr = desc.splitHead("\n");
+    if (arr) {
+        info.summary = arr[0].trim();
+        info.description = arr[1].trim();
+    } else {
+        info.summary = desc;
+    }
+
     return info;
 }
 

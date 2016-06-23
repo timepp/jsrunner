@@ -11,10 +11,10 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\..\..\Users\idtong\OneDrive\softconf\windev_functions.js" />
     <None Include="app.css" />
     <None Include="app.html" />
     <None Include="app.js" />
-    <None Include="js\windev_functions.js" />
     <None Include="sample.js" />
     <None Include="thirdparty\jquery-2.1.4.js" />
     <None Include="thirdparty\tps.js" />

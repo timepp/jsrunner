@@ -116,7 +116,19 @@ if (typeof String.prototype.splitTail !== 'function') {
             return '"' + str + '"';
         },
         RemoveQuote: function (str) {
-            return str.replace(/^(["'])(.*)\1$/, "$2");
+            if (str.length >= 2) {
+                var a = str.charAt(0);
+                var b = str.charAt(str.length - 1);
+                if (a == '"' && b == '"' ||
+                    a == '\'' && b == '\'' ||
+                    a == '{' && b == '}' ||
+                    a == '[' && b == ']' ||
+                    a == '(' && b == ')')
+                {
+                    return str.substr(1, str.length - 2);
+                }
+            }
+            return str;
         },
         MergeProperty: function (target, source) {
             for (var key in source) {
@@ -126,6 +138,18 @@ if (typeof String.prototype.splitTail !== 'function') {
                     tps.util.MergeProperty(target[key], source[key]);
                 } else {
                     target[key] = source[key];
+                }
+            }
+        },
+        UpdateProperty: function (target, source) {
+            for (var key in target) {
+                if (key in source) {
+                    if (target[key] !== null && typeof target[key] === "object" &&
+                        source[key] !== null && typeof source[key] === "object") {
+                        tps.util.UpdateProperty(target[key], source[key]);
+                    } else {
+                        target[key] = source[key];
+                    }
                 }
             }
         },

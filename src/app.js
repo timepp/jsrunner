@@ -1,10 +1,10 @@
-/// <reference path="thirdparty/jquery-2.1.4.min.js" />
+﻿/// <reference path="thirdparty/jquery-2.1.4.min.js" />
 /// <reference path="thirdparty/json2.js" />
 
 // TODO: javascript intellisense has problem if visual studio project file is not in root folder.
 //       The workaround is to use absolute paths
 
-tps.sys.RestartHTA(true, true);
+//tps.sys.RestartHTA(true, true);
 
 var functions = {};
 var activeFunction = null;
@@ -286,10 +286,10 @@ function ShowFunction(func) {
         $("#paramcontainer").append(div);
 
         var param = func.params[i];
-        div.append($('<span class="input-group-addon">').text(param.description));
 
         if (param.type == "string") {
             if (param.value === null) param.value = "";
+            div.append($('<span class="input-group-addon">').text(param.description));
             var textbox = $('<input class="form-control" type="text">').val(param.value);
             div.append(textbox);
             textbox.on("change", (function (p, t) {
@@ -300,6 +300,7 @@ function ShowFunction(func) {
         }
         else if (param.type == "number") {
             if (param.value === null) param.value = "";
+            div.append($('<span class="input-group-addon">').text(param.description));
             var textbox = $('<input class="form-control" type="text">').addClass("numeric-only").val(param.value);
             div.append(textbox);
             textbox.on("change", (function (p, t) {
@@ -307,6 +308,19 @@ function ShowFunction(func) {
                     p.value = parseInt(t.val());
                 }
             })(param, textbox));
+        }
+        else if (param.type == "bool") {
+            if (param.value === null) param.value = false;
+            var id = "func_param_id_" + i;
+            var checkbox = $('<input type="checkbox">').attr("id", id);
+            checkbox[0].checked = param.value;
+            div.append($('<span class="input-group-addon">').append(checkbox));
+            div.append($('<label class="form-control">').text(param.description).attr("for", id));
+            checkbox.on("change", (function (p, t) {
+                return function () {
+                    p.value = t[0].checked;
+                }
+            })(param, checkbox));
         }
         else if (param.type.startsWith("string in ")) {
             var spec = param.type.substr(10).replace(/^\[(.*)\]$/, "$1");
@@ -319,10 +333,15 @@ function ShowFunction(func) {
 
             // selection list here
             if (param.value === null) param.value = slist[0];
+            div.append($('<span class="input-group-addon">').text(param.description));
             var selectbox = $('<select class="form-control">');
             div.append(selectbox);
             $.each(slist, function (k, v) {
-                selectbox.append($("<option/>", { value: v, text: v }));
+                if (v == "-") {
+                    selectbox.append($("<option disabled>──────────</option>"));
+                } else {
+                    selectbox.append($("<option/>", { value: v, text: v }));
+                }
             });
             
             selectbox.val(param.value);
@@ -334,6 +353,7 @@ function ShowFunction(func) {
         }
         else if (spec = stripLeft(param.type, "string with recommendation ")) {
             spec = tps.util.RemoveQuote(spec);
+            div.append($('<span class="input-group-addon">').text(param.description));
             var textbox = $('<input class="form-control" type="text">').val(param.value);
             div.append(textbox);
             var $recommendationGroup = $('<div class="input-group-btn">');
@@ -354,6 +374,7 @@ function ShowFunction(func) {
                     $recommendationGroup.append($btn);
                 }
             });
+            
             div.append($recommendationGroup);
             textbox.on("change", (function (p, t) {
                 return function () {

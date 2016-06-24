@@ -12,7 +12,7 @@ function getMaxFabonacci() {
     return "1022";
 }
 
-function Fabonacci(n) {
+function Fabonacci(n, x) {
     /** Compute the nth fabonacci number
      *  The fabonacci sequence is: 1, 1, 2, 3, 5, 8, 13, 21, ...
      *
@@ -20,6 +20,7 @@ function Fabonacci(n) {
      *  See {@link http://www.baidu.com baidu} for more details.
      *  
      *  @param {number} n - the index, started from 1. for example, the 4th number is 3.
+     *  @param {bool} x - abc
      */
 
     var a = 0;

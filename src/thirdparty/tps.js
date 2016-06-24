@@ -512,8 +512,31 @@ if (typeof String.prototype.splitTail !== 'function') {
             return parseInt(tps.reg.GetGeneralValueAsString(key, valname, /REG_DWORD\s+0[xX](\S+)/gm), 16);
         },
         GetBoolValue: function (key, valname) {
-            return GetIntValue(key, valname) > 0;
+            return tps.reg.GetIntValue(key, valname) > 0;
         },
+
+        GetStringValueFallback: function (key, valname, fallbackval) {
+            try {
+                return this.GetStringValue(key, valname);
+            } catch (e) {
+                return fallbackval;
+            }
+        },
+        GetIntValueFallback: function (key, valname, fallbackval) {
+            try {
+                return this.GetIntValue(key, valname);
+            } catch (e) {
+                return fallbackval;
+            }
+        },
+        GetBoolValueFallback: function (key, valname, fallbackval) {
+            try {
+                return this.GetBoolValue(key, valname);
+            } catch (e) {
+                return fallbackval;
+            }
+        },
+
         SetStringValue: function (key, valname, val) {
             tps.reg.SetGeneralValueByString(key, valname, "REG_SZ", val);
         },

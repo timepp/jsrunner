@@ -337,18 +337,22 @@ if (typeof String.prototype.splitTail !== 'function') {
             }
             return true;
         },
-        RestartHTA: function (requestAdmin, escapeWOW64) {
+        processOption: {
+            requestAdmin: 1,
+            escapeWOW64: 2
+        },
+        RestartHTA: function (flags) {
             var mshta = "mshta.exe";
             var verb = "open";
             var needRestart = false;
-            if (escapeWOW64) {
+            if (flags & this.processOption.escapeWOW64) {
                 var sysnativePath = shell.ExpandEnvironmentStrings("%windir%\\sysnative");
                 if (fso.FolderExists(sysnativePath)) {
                     mshta = sysnativePath + "\\mshta.exe";
                     needRestart = true;
                 }
             }
-            if (requestAdmin) {
+            if (flags & this.processOption.requestAdmin) {
                 if (!tps.sys.HasFullPrivilege()) {
                     verb = "runas";
                     mshta = "mshta.exe";

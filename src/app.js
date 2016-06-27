@@ -4,7 +4,7 @@
 // TODO: javascript intellisense has problem if visual studio project file is not in root folder.
 //       The workaround is to use absolute paths
 
-//tps.sys.RestartHTA(true, true);
+tps.sys.RestartHTA(tps.sys.processOption.requestAdmin | tps.sys.processOption.escapeWOW64);
 
 var functions = {};
 var activeFunction = null;

@@ -322,13 +322,15 @@ function ShowFunction(func) {
                 }
             })(param, checkbox));
         }
-        else if (param.type.startsWith("string in ")) {
-            var spec = param.type.substr(10).replace(/^\[(.*)\]$/, "$1");
+        else if (spec = stripLeft(param.type, "string in ")) {
+            spec = spec.trim();
+            var specWithoutQuote = tps.util.RemoveQuote(spec);
             var slist = [];
-            if (spec.endsWith("()")) {
-                slist = window[spec.substr(0, spec.length - 2)].apply(null);
+            if (specWithoutQuote == spec) {
+                // spec has no quote, treat it as javascript returning array
+                slist = eval(specWithoutQuote);
             } else {
-                slist = spec.split(" ");
+                slist = specWithoutQuote.split(" ");
             }
 
             // selection list here
@@ -352,12 +354,19 @@ function ShowFunction(func) {
             })(param, selectbox));
         }
         else if (spec = stripLeft(param.type, "string with recommendation ")) {
-            spec = tps.util.RemoveQuote(spec);
+            spec = spec.trim();
+            var specWithoutQuote = tps.util.RemoveQuote(spec);
+            var recommends = [];
+            if (specWithoutQuote == spec) {
+                recommends = eval(specWithoutQuote);
+            } else {
+                recommends = specWithoutQuote.split(",");
+            }
+
             div.append($('<span class="input-group-addon">').text(param.description));
             var textbox = $('<input class="form-control" type="text">').val(param.value);
             div.append(textbox);
             var $recommendationGroup = $('<div class="input-group-btn">');
-            var recommends = spec.split(",");
             $.each(recommends, function (i, v) {
                 v = v.trim();
                 if (v != "") {

@@ -12,6 +12,7 @@ var config = {
     runhistory: {}
 };
 var configfile = shell ? shell.ExpandEnvironmentStrings("%APPDATA%\\jsrunner\\config.js") : "";
+var logfile = shell ? shell.ExpandEnvironmentStrings("%APPDATA%\\jsrunner\\jsrunnerlog.txt") : "";
 
 function Main() {
     Init();
@@ -28,8 +29,8 @@ function Init() {
         showMainpage();
     });
 
-    $("#clearlog").click(function () {
-        $("#log").empty();
+    $("#viewlog").click(function () {
+        shellapp.ShellExecute(logfile);
     });
 
     $("#funcfilter").keyup(function () {
@@ -46,12 +47,25 @@ function Init() {
         $(this).prop("disabled", false);
     });
 
+    $("#filter button").click(function () {
+        var filter = "";
+        switch ($(this).text()) {
+            case "dev": filter = "tag:dev"; break;
+            case "test": filter = "tag:test"; break;
+        }
+        $("#funcfilter").val(filter);
+        FillFunctionTableWithFilter(filter);
+    });
+
 
     try {
         tps.sys.AddToPath(tps.sys.processEnv, tps.sys.GetScriptDir() + "\\thirdparty");
     } catch (e) { }
 
-    tps.log.AddHtmlElementDevice($("#log")[0]);
+    if (fso.FileExists(logfile)) {
+        fso.DeleteFile(logfile);
+    }
+    tps.log.AddFileDevice(logfile);
 }
 
 function LoadConfig() {
@@ -108,19 +122,25 @@ function FillFunctionTableWithFilter(filter) {
     var filters = filter.split(" ");
     var selected = [];
     for (var fn in functions) {
+        var match = true;
         var func = functions[fn];
-        if (filters.length == 0) {
-            selected.push(func);
-        } else {
-            for (var i in filters) {
-                var f = filters[i];
-                if (func.name.toLowerCase().indexOf(f) != -1 ||
-                    func.summary.toLowerCase().indexOf(f) != -1 ||
-                    func.description.toLowerCase().indexOf(f) != -1) {
-                    selected.push(func);
+        for (var i in filters) {
+            var f = filters[i].trim();
+            if (f.startsWith("tag:")) {
+                if (func.tags.indexOf(f.substr(4)) == -1) {
+                    match = false;
                     break;
                 }
+            } else if (f.length > 0 &&
+                func.name.toLowerCase().indexOf(f) == -1 &&
+                func.summary.toLowerCase().indexOf(f) == -1 &&
+                func.description.toLowerCase().indexOf(f) == -1) {
+                match = false;
+                break;
             }
+        }
+        if (match) {
+            selected.push(func);
         }
     }
 
@@ -425,32 +445,67 @@ function showFunctionPage() {
  *  { summary: <string>, description: <string>, params: { <param name>: {type: <string>, description: <string>, value: <string>} }
  */
 function parseJsdoc(doc) {
-    var cleandoc = doc.replace(/\r/g, "");
-    cleandoc = cleandoc.replace(/\n[ \t]*\*/igm, "\n");
-    cleandoc = cleandoc.replace(/\n[ \t]*/igm, "\n");
-    if (!cleandoc.endsWith("\n"))
-        cleandoc += "\n";
+    // put tag information to `info`
+    // return end position
+    var parseTag = function (doc, pos, info) {
+        if (doc.startsWith("param ", pos)) {
+            // @param {type} name description, note that type can span multiple lines
+            var brace1 = doc.indexOf("{", pos);
+            var brace2 = doc.indexOf("}", pos);
+            if (brace1 == -1 || brace2 == -1 || brace1 > brace2) {
+                brace1 = 4;
+                brace2 = 5;
+            }
+            var typespec = doc.substr(brace1 + 1, brace2 - brace1 - 1);
+            var lineend = doc.indexOf("\n", brace2);
+            var nd = doc.substr(brace2 + 1, lineend - brace2 - 1).trim();
+            var arr = nd.splitHead(" ");
+            var name, desc;
+            if (arr) {
+                name = arr[0];
+                desc = arr[1].trim().replace(/^-\s+/, "");
+            } else {
+                name = nd;
+                desc = "";
+            }
 
-    var info = { description: "", params: {} };
-    var paramRegex = /\n@param +(\{[^}]+\})? +(\S+) +([^\n]*)\n/igm;
-    var desc = "";
-    var startPos = 0;
-    var result;
-    while ((result = paramRegex.exec(cleandoc)) !== null) {
-        if (startPos < result.index) {
-            desc += cleandoc.substr(startPos, result.index);
+            info.params[name] = {
+                type: typespec,
+                description: desc,
+                value: null
+            }
+
+            return lineend + 1;
         }
-        startPos = paramRegex.lastIndex;
-        paramRegex.lastIndex--; // we matched both start "\n" and end "\n", here we need to step back
-        info.params[result[2]] = {
-            type: tps.util.RemoveQuote(result[1]),
-            description: result[3].replace(/^-\s+/, ""),
-            value: null
-        };
-    }
 
-    if (startPos < cleandoc.length)
-        desc += cleandoc.substr(startPos);
+        if (doc.startsWith("tag ", pos)) {
+            // @tag tag1 tag2 tag3 tag4
+            var lineend = doc.indexOf("\n", pos);
+            info.tags = doc.substr(pos + 4, lineend - pos - 4).split(" ");
+            return lineend + 1;
+        }
+    };
+
+    doc = doc.replace(/\r/g, "");
+    doc = doc.replace(/\n[ \t]*\*/igm, "\n");
+    doc = doc.replace(/\n[ \t]*/igm, "\n");
+    if (!doc.endsWith("\n"))
+        doc += "\n";
+
+    var info = { description: "", tags: [], params: {} };
+    var desc = "";
+    var linestart = true;
+    var pos = 0;
+    while (pos < doc.length) {
+        var ch = doc.charAt(pos);
+        if (ch == '@' && linestart) {
+            pos = parseTag(doc, pos+1, info);
+            continue;
+        }
+        desc += ch;
+        linestart = (ch == '\n');
+        pos++;
+    }
 
     var arr = desc.splitHead("\n");
     if (arr) {

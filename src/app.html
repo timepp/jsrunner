@@ -1,7 +1,7 @@
 ﻿<!DOCTYPE html>
 <html>
 <head>
-    <title>Javscript Runner</title>
+    <title>Task Runner</title>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -20,8 +20,7 @@
     <script src="app.js"></script>
 
     <!-- put any js functions you want to run with UI below -->
-    <script type="text/javascript" src="c:/cloud/softconf/windev_functions.js"></script>
-    <script type="text/javascript" src="windev_functions.js"></script>
+    <script type="text/javascript" src="../scripts/windev_functions.js"></script>
     <script type="text/javascript" src="sample.js"></script>
 
 </head>
@@ -29,14 +28,17 @@
 <body>
     <div id="mainpage">
 
-        <h3>Choose a task</h3>
-
-        <div class="input-group">
+        <div class="input-group" id="filter">
             <span class="input-group-addon">Filter:</span>
             <input id="funcfilter" class="form-control" type="text" />
+            <div class="input-group-btn">
+                <button class="btn btn-default">test</button>
+                <button class="btn btn-default">dev</button>
+                <button class="btn btn-default">all</button>
+            </div>
         </div>
 
-        <hr />
+        <br />
 
         <table id="functions">
             <thead>
@@ -67,19 +69,8 @@
 
         <button id="run" class="btn btn-danger">EXECUTE</button>
         <button id="back" class="btn btn-success">BACK</button>
-        <button id="clearlog" class="btn btn-default">Clear Log</button>
+        <button id="viewlog" class="btn btn-default">View Log</button>
         
-        <hr />
-        
-        <div class="panel panel-default">
-            <div class="panel-heading">
-                Run log:
-            </div>
-            <div class="panel-body" id="log">
-
-            </div>
-        </div>
-
     </div>
 
 </body>

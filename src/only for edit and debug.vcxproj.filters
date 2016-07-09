@@ -18,11 +18,11 @@
     <None Include="thirdparty\jquery-2.1.4.js">
       <Filter>Header Files</Filter>
     </None>
-    <None Include="js\windev_functions.js" />
     <None Include="app.css" />
     <None Include="app.html" />
     <None Include="app.js" />
     <None Include="sample.js" />
     <None Include="thirdparty\tps.js" />
+    <None Include="..\scripts\windev_functions.js" />
   </ItemGroup>
 </Project>

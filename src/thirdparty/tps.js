@@ -64,22 +64,26 @@ if (typeof String.prototype.beginWithOneOf !== 'function') {
         return false;
     };
 }
-if (typeof String.prototype.startsWith !== 'function') {
-    String.prototype.startsWith = function (b) {
-        var i = b.length;
-        if (this.length < i) {
-            return false;
-        }
 
-        while (i--) {
-            if (this.charAt(i) != b[i]) {
-                return false;
-            }
-        }
-
-        return true;
+if (!String.prototype.startsWith) {
+    String.prototype.startsWith = function (searchString, position) {
+        position = position || 0;
+        return this.substr(position, searchString.length) === searchString;
     };
 }
+
+if (!String.prototype.endsWith) {
+    String.prototype.endsWith = function (searchString, position) {
+        var subjectString = this.toString();
+        if (typeof position !== 'number' || !isFinite(position) || Math.floor(position) !== position || position > subjectString.length) {
+            position = subjectString.length;
+        }
+        position -= searchString.length;
+        var lastIndex = subjectString.indexOf(searchString, position);
+        return lastIndex !== -1 && lastIndex === position;
+    };
+}
+
 if (typeof String.prototype.endsWith !== 'function') {
     String.prototype.endsWith = function (suffix) {
         return this.indexOf(suffix, this.length - suffix.length) !== -1;
@@ -100,7 +104,7 @@ if (typeof String.prototype.splitTail !== 'function') {
 
 (function () {
 
-    var ForReading = 1, ForWriting = 2;
+    var ForReading = 1, ForWriting = 2, ForAppending = 8;
 
     // tps.util ============================================================================================================================
     // tps.util ============================================================================================================================
@@ -779,6 +783,12 @@ if (typeof String.prototype.splitTail !== 'function') {
             ofile.Write(text);
             ofile.Close();
         },
+        AppendTextFileSimple: function (text, filename) {
+            tps.file.EnsureDirectoryExist(tps.file.GetDir(filename));
+            var ofile = fso.OpenTextFile(filename, ForAppending, true);
+            ofile.Write(text);
+            ofile.Close();
+        },
         ReadBinaryFile: function (filename, pos, len) {
             var stream = new ActiveXObject("ADODB.Stream");
             // stream.Type = 1;
@@ -921,6 +931,19 @@ if (typeof String.prototype.splitTail !== 'function') {
                     element.appendChild(tps.ui.span("".lpad(" ", indent * 2) + text, "log_" + level));
                     element.appendChild(document.createElement("br"));
                     element.scrollTop += 1000000;
+                }
+            };
+            tps.log.devices.push(logDevice);
+        },
+        AddFileDevice: function (filename) {
+            var logDevice = {
+                WriteLog: function (level, tag, dt, indent, text) {
+                    var timestring = tps.util.FormatDateString(dt, "Y-m-d H:M:S.I");
+                    var line = timestring + " " + "".lpad(" ", indent * 2) + text;
+                    if (!line.endsWith("\r\n")) {
+                        line += "\r\n";
+                    }
+                    tps.file.AppendTextFileSimple(line, filename);
                 }
             };
             tps.log.devices.push(logDevice);

@@ -11,7 +11,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\..\..\Users\idtong\OneDrive\softconf\windev_functions.js" />
+    <None Include="..\scripts\windev_functions.js" />
     <None Include="app.css" />
     <None Include="app.html" />
     <None Include="app.js" />

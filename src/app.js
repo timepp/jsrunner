@@ -60,11 +60,11 @@ function Init() {
 
     try {
         tps.sys.AddToPath(tps.sys.processEnv, tps.sys.GetScriptDir() + "\\thirdparty");
+        if (fso.FileExists(logfile)) {
+            fso.DeleteFile(logfile);
+        }
     } catch (e) { }
 
-    if (fso.FileExists(logfile)) {
-        fso.DeleteFile(logfile);
-    }
     tps.log.AddFileDevice(logfile);
 }
 
@@ -444,6 +444,7 @@ function ExecuteFunction(func) {
         window[func.name].apply(null, args);
     } catch (e) {
         tps.log.Error(e.toString());
+        alert(e.toString());
     }
 }
 

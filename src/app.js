@@ -318,6 +318,24 @@ function ShowFunction(func) {
                 }
             })(param, textbox));
         }
+        else if (param.type == "filename") {
+            if (param.value === null) param.value = "";
+            div.append($('<span class="input-group-addon">').text(param.description));
+            var textbox = $('<input class="form-control" type="text">').val(param.value).prop("readonly", true);
+            div.append(textbox);
+            var btngroup = $('<div class="input-group-btn">');
+            var btn = $('<label class="btn btn-default" for="file-selector">');
+            var input = $('<input id="file-selector" type="file" style="display:none">').prop("value", param.value);
+            btn.append(input);
+            btn.append("...");
+            input.on("change", (function (p, t, x) {
+                return function () {
+                    p.value = t.val();
+                    x.val(t.val());
+                }
+            })(param, input, textbox));
+            div.append(btngroup.append(btn));
+        }
         else if (param.type == "number") {
             if (param.value === null) param.value = "";
             div.append($('<span class="input-group-addon">').text(param.description));

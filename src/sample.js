@@ -5,7 +5,7 @@ function TestFunction1(name, value) {
      *  @param {number} value - the new value of the configuration
      */
 
-    alert("function TestFunction1 called" + name + value);
+    return JSON.parse(name);
 }
 
 function getMaxFabonacci() {
@@ -31,5 +31,5 @@ function Fabonacci(n, x) {
         b = c;
     }
 
-    tps.log.Debug("the " + n + "th fabonacci number is : " + b);
+    return b;
 }

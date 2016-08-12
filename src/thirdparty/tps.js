@@ -16,6 +16,7 @@ try {
     var net = new ActiveXObject("WScript.Network");
     var shellapp = new ActiveXObject("Shell.Application");
     var env = shell.Environment("Process");
+    var winapi = new ActiveXObject("CallDll");
 } catch (e) { }
 
 var HKEY_LOCAL_MACHINE = 0x80000002;
@@ -345,6 +346,9 @@ if (typeof String.prototype.splitTail !== 'function') {
             requestAdmin: 1,
             escapeWOW64: 2
         },
+
+        // TODO: actually we have ability to restart any process, because we have full winapi access.
+        //       will add arbitrary process restart later.
         RestartHTA: function (flags) {
             var mshta = "mshta.exe";
             var verb = "open";
@@ -386,6 +390,12 @@ if (typeof String.prototype.splitTail !== 'function') {
         GetScriptDir: function () {
             return tps.file.GetDir(tps.sys.GetScriptPath());
         },
+
+        GetExecutablePath: function () {
+            var result = winapi.call("kernel32.dll", "GetModuleFileNameW", "int:0 out-wstr len:4096");
+            return result.outputs[0];
+        },
+
         NotifySettingChange: function(name) {
             return shell.Run("calldll.exe user32.dll SendNotifyMessageW int:0xffff int:0x1A int:0 wstr:" + name, 0, true);
         },

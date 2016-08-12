@@ -4,7 +4,9 @@
 // TODO: javascript intellisense has problem if visual studio project file is not in root folder.
 //       The workaround is to use absolute paths
 
-tps.sys.RestartHTA(tps.sys.processOption.requestAdmin | tps.sys.processOption.escapeWOW64);
+try {
+    tps.sys.RestartHTA(tps.sys.processOption.requestAdmin | tps.sys.processOption.escapeWOW64);
+} catch (e) { }
 
 var functions = {};
 var activeFunction = null;
@@ -40,10 +42,11 @@ function Init() {
     $("#run").bind("click", function () {
         $(this).prop("disabled", true);
         SaveConfig();
-        ExecuteFunction(activeFunction);
-
+        $("#result").empty();
+        var result = ExecuteFunction(activeFunction);
         // update func description in case there is any status inside it.
         ShowFunction(activeFunction);
+        showExecuteResult(result);
         $(this).prop("disabled", false);
     });
 
@@ -252,6 +255,93 @@ function splitJsDocToTags(str) {
     return result;
 }
 
+function createNodeFromData(v) {
+    if (v === undefined || v === null) {
+        return "";
+    }
+
+    if (typeof v !== "object") {
+        return v.toString();
+    }
+
+    if (v.constructor === Array) {
+        // represents as table if:
+        // 1. all its childs are object
+        // 2. there exists one property that is shared by multiple objects
+        var allChildAreObject = true;
+        var propertyShared = false;
+        var propertySet = {};
+        for (var i in v) {
+            var item = v[i];
+            if (typeof item !== "object" ||
+                item.constructor === Array) {
+                allChildAreObject = false;
+            }
+            for (var p in item) {
+                if (p in propertySet) {
+                    propertyShared = true;
+                } else {
+                    propertySet[p] = true;
+                }
+            }
+        }
+
+        if (allChildAreObject && propertyShared) {
+            var $table = $('<table>');
+            var $thead = $('<thead>');
+            var $tr_head = $('<tr>');
+            for (var p in propertySet) {
+                $tr_head.append($('<td>').text(p));
+            }
+
+            var $tbody = $('<tbody>');
+            for (var i in v) {
+                var $tr = $('<tr>');
+                for (var p in propertySet) {
+                    $tr.append($('<td>').append(createNodeFromData(v[i][p])));
+                }
+                $tbody.append($tr);
+            }
+
+            $table.append($thead.append($tr_head))
+                  .append($tbody);
+            return $table;
+
+        } else {
+            // create simple table
+            var $table = $('<table>');
+            for (var i in v) {
+                $table.append($('<tr>').append($('<td>').append(createNodeFromData(v[i]))));
+            }
+            return $table;
+        }
+    } else {
+        // object, create property table
+        var $table = $('<table>');
+        for (var p in v) {
+            $table.append($('<tr>').append($('<td>').text(p))
+                                   .append($('<td>').append(createNodeFromData(v[p])))
+                );
+        }
+        return $table;
+    }
+}
+
+function showExecuteResult(result) {
+    var $result = $("#result");
+    $result.empty();
+    var $content;
+    if (result.ret === false) {
+        $content = $('<span class="btn-error form-control">').text("failed" + (result.error? ": " + result.error: ""));
+    } else if (result.ret === true) {
+        $content = $('<span class="btn-success form-control">').text("succeeded");
+    } else {
+        $content = createNodeFromData(result.ret);
+    }
+
+    $result.append($content);
+}
+
 function createNodeFromJsDoc(str) {
     var $div = $("<div>");
     var tags = splitJsDocToTags(str);
@@ -441,10 +531,11 @@ function ExecuteFunction(func) {
     }
 
     try {
-        window[func.name].apply(null, args);
+        var retval = window[func.name].apply(null, args);
+        return {ret:retval}
     } catch (e) {
         tps.log.Error(e.toString());
-        alert(e.toString());
+        return { ret: false, error: e.toString() };
     }
 }
 

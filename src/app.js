@@ -50,17 +50,6 @@ function Init() {
         $(this).prop("disabled", false);
     });
 
-    $("#filter button").click(function () {
-        var filter = "";
-        switch ($(this).text()) {
-            case "dev": filter = "tag:dev"; break;
-            case "test": filter = "tag:test"; break;
-        }
-        $("#funcfilter").val(filter);
-        FillFunctionTableWithFilter(filter);
-    });
-
-
     try {
         tps.sys.AddToPath(tps.sys.processEnv, tps.sys.GetScriptDir() + "\\thirdparty");
         if (fso.FileExists(logfile)) {
@@ -129,12 +118,7 @@ function FillFunctionTableWithFilter(filter) {
         var func = functions[fn];
         for (var i in filters) {
             var f = filters[i].trim();
-            if (f.startsWith("tag:")) {
-                if (func.tags.indexOf(f.substr(4)) == -1) {
-                    match = false;
-                    break;
-                }
-            } else if (f.length > 0 &&
+            if (f.length > 0 &&
                 func.name.toLowerCase().indexOf(f) == -1 &&
                 func.summary.toLowerCase().indexOf(f) == -1 &&
                 func.description.toLowerCase().indexOf(f) == -1) {
@@ -585,13 +569,6 @@ function parseJsdoc(doc) {
                 value: null
             }
 
-            return lineend + 1;
-        }
-
-        if (doc.startsWith("tag ", pos)) {
-            // @tag tag1 tag2 tag3 tag4
-            var lineend = doc.indexOf("\n", pos);
-            info.tags = doc.substr(pos + 4, lineend - pos - 4).split(" ");
             return lineend + 1;
         }
     };

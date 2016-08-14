@@ -49,10 +49,20 @@
     </div>
 
     <div id="functionpage" style="display:none">
-        <div id="funcname"></div>
-        <div id="funcsummary"></div>
-        <p></p>
-        <div id="funcdesc"></div>
+        <div class="input-group">
+            <span class="form-control">
+                <span id="funcname"></span>
+                &nbsp; - &nbsp;
+                <span id="funcsummary"></span>
+            </span>
+            <div class="input-group-btn">
+                <button id="back" class="btn btn-success">back</button>
+                <button id="viewlog" class="btn btn-default">view Log</button>
+                <button id="run" class="btn btn-danger">execute</button>
+            </div>
+        </div>
+
+        <div id="funcdesc" style="margin: 10px 10px"></div>
 
         <hr />
 
@@ -61,10 +71,6 @@
             <div class="panel-body" id="paramcontainer">
             </div>
         </div>
-
-        <button id="run" class="btn btn-danger">EXECUTE</button>
-        <button id="back" class="btn btn-success">BACK</button>
-        <button id="viewlog" class="btn btn-default">View Log</button>
 
         <hr />
 

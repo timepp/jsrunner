@@ -53,6 +53,12 @@ function Init() {
         }, 10);
     });
 
+    $(document.body).keyup(function (e) {
+        if (e.keyCode == 27) {
+            showMainpage();
+        }
+    });
+
     try {
         tps.sys.AddToPath(tps.sys.processEnv, tps.sys.GetScriptDir() + "\\thirdparty");
         if (fso.FileExists(logfile)) {

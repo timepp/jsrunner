@@ -43,11 +43,14 @@ function Init() {
         $(this).prop("disabled", true);
         SaveConfig();
         $("#result").empty();
-        var result = ExecuteFunction(activeFunction);
-        // update func description in case there is any status inside it.
-        ShowFunction(activeFunction);
-        showExecuteResult(result);
-        $(this).prop("disabled", false);
+        
+        window.setTimeout(function () {
+            var result = ExecuteFunction(activeFunction);
+            // update func description in case there is any status inside it.
+            ShowFunction(activeFunction);
+            showExecuteResult(result);
+            $("#run").prop("disabled", false);
+        }, 10);
     });
 
     try {
@@ -241,7 +244,7 @@ function splitJsDocToTags(str) {
 
 function createNodeFromData(v) {
     if (v === undefined || v === null) {
-        return "";
+        return "done";
     }
 
     if (typeof v !== "object") {
@@ -303,7 +306,7 @@ function createNodeFromData(v) {
         // object, create property table
         var $table = $('<table>');
         for (var p in v) {
-            $table.append($('<tr>').append($('<td>').text(p))
+            $table.append($('<tr>').append($('<td class="shrink">').text(p))
                                    .append($('<td>').append(createNodeFromData(v[p])))
                 );
         }
@@ -372,6 +375,7 @@ function ShowFunction(func) {
     $("#funcsummary").text(func.summary);
     $("#funcdesc").empty();
     $("#funcdesc").append(createNodeFromJsDoc(func.description));
+    $("#result").empty();
 
     $("#paramcontainer").empty();
     var spec = "";

@@ -50,21 +50,19 @@
 
     <div id="functionpage" style="display:none">
         <div class="input-group">
+            <div class="input-group-btn">
+                <button id="back" class="btn btn-default">
+                    <span class="glyphicon glyphicon-home" aria-hidden="true"></span>
+                </button>
+            </div>
             <span class="form-control">
                 <span id="funcname"></span>
                 &nbsp; - &nbsp;
                 <span id="funcsummary"></span>
             </span>
-            <div class="input-group-btn">
-                <button id="back" class="btn btn-success">back</button>
-                <button id="viewlog" class="btn btn-default">view Log</button>
-                <button id="run" class="btn btn-danger">execute</button>
-            </div>
         </div>
 
         <div id="funcdesc" style="margin: 10px 10px"></div>
-
-        <hr />
 
         <div class="panel panel-default">
             <div class="panel-heading">Parameters</div>
@@ -72,7 +70,9 @@
             </div>
         </div>
 
-        <hr />
+        <!--<button id="viewlog" class="btn btn-default">view Log</button>-->
+        <button id="run" class="btn btn-primary center-block">&nbsp;&nbsp;Run This Task&nbsp;&nbsp;</button>
+        <br />
 
         <div class="panel panel-default">
             <div class="panel-heading">Result</div>

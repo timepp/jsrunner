@@ -551,6 +551,7 @@ function showFunctionPage() {
 function parseJsdoc(doc) {
     // put tag information to `info`
     // return end position
+    // return -1 if parse failed
     var parseTag = function (doc, pos, info) {
         if (doc.startsWith("param ", pos)) {
             // @param {type} name description, note that type can span multiple lines
@@ -581,6 +582,8 @@ function parseJsdoc(doc) {
 
             return lineend + 1;
         }
+
+        return -1;
     };
 
     doc = doc.replace(/\r/g, "");
@@ -596,8 +599,11 @@ function parseJsdoc(doc) {
     while (pos < doc.length) {
         var ch = doc.charAt(pos);
         if (ch == '@' && linestart) {
-            pos = parseTag(doc, pos+1, info);
-            continue;
+            var newpos = parseTag(doc, pos + 1, info);
+            if (newpos != -1) {
+                pos = newpos;
+                continue;
+            }
         }
         desc += ch;
         linestart = (ch == '\n');

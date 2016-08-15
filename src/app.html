@@ -64,18 +64,22 @@
 
         <div id="funcdesc" style="margin: 10px 10px"></div>
 
-        <div class="panel panel-default">
-            <div class="panel-heading">Parameters</div>
+        <div class="panel panel-default" id="parampanel">
+            <div class="panel-heading"><b>Parameters</b></div>
             <div class="panel-body" id="paramcontainer">
             </div>
         </div>
 
-        <!--<button id="viewlog" class="btn btn-default">view Log</button>-->
+        
         <button id="run" class="btn btn-primary center-block">&nbsp;&nbsp;Run This Task&nbsp;&nbsp;</button>
         <br />
 
-        <div class="panel panel-default">
-            <div class="panel-heading">Result</div>
+        <div class="panel panel-default" id="resultpanel">
+            <div class="panel-heading clearfix"><b>Result</b>
+                <button id="viewlog" class="btn btn-default pull-right">
+                    <span class="glyphicon glyphicon-info-sign" aria-hidden="true"></span>
+                </button>
+            </div>
             <div class="panel-body" id="result"></div>
         </div>
         

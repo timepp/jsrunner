@@ -325,7 +325,7 @@ function showExecuteResult(result) {
     $result.empty();
     var $content;
     if (result.ret === false) {
-        $content = $('<span class="btn-error form-control">').text("failed" + (result.error? ": " + result.error: ""));
+        $content = $('<span class="btn-danger form-control">').text("failed" + (result.error? ": " + result.error: ""));
     } else if (result.ret === true) {
         $content = $('<span class="btn-success form-control">').text("succeeded");
     } else {
@@ -333,6 +333,7 @@ function showExecuteResult(result) {
     }
 
     $result.append($content);
+    $("#resultpanel").show();
 }
 
 function createNodeFromJsDoc(str) {
@@ -381,9 +382,9 @@ function ShowFunction(func) {
     $("#funcsummary").text(func.summary);
     $("#funcdesc").empty();
     $("#funcdesc").append(createNodeFromJsDoc(func.description));
-    $("#result").empty();
-
+    $("#resultpanel").hide();
     $("#paramcontainer").empty();
+
     var spec = "";
     for (var i in func.params) {
         var div = $("<div>").addClass("input-group");
@@ -513,6 +514,12 @@ function ShowFunction(func) {
                 }
             })(param, textbox));
         }
+    }
+
+    if ($("#paramcontainer").children().length > 0) {
+        $("#parampanel").show();
+    } else {
+        $("#parampanel").hide();
     }
 
     activeFunction = func;

@@ -27,12 +27,16 @@ function Init() {
 
     functions = GetRunnableFunctions();
 
-    $("#back").click(function () {
+    $("#home").click(function () {
         showMainpage();
     });
 
+    $("#back").click(function () {
+        showFunctionPage();
+    });
+
     $("#viewlog").click(function () {
-        shellapp.ShellExecute(logfile);
+        showLogPage();
     });
 
     $("#funcfilter").keyup(function () {
@@ -43,6 +47,7 @@ function Init() {
         $(this).prop("disabled", true);
         SaveConfig();
         $("#result").empty();
+        $("#log").empty();
         
         window.setTimeout(function () {
             var result = ExecuteFunction(activeFunction);
@@ -59,6 +64,10 @@ function Init() {
         }
     });
 
+    $(window).resize(function () {
+        resizeLogPage();
+    });
+
     try {
         tps.sys.AddToPath(tps.sys.processEnv, tps.sys.GetScriptDir() + "\\thirdparty");
         if (fso.FileExists(logfile)) {
@@ -66,7 +75,7 @@ function Init() {
         }
     } catch (e) { }
 
-    tps.log.AddFileDevice(logfile);
+    tps.log.AddHtmlElementDevice($("#log")[0]);
 }
 
 function LoadConfig() {
@@ -378,7 +387,7 @@ function stripLeft(str, matcher) {
 }
 
 function ShowFunction(func) {
-    $("#funcname").text(func.name);
+    $(".funcname").text(func.name);
     $("#funcsummary").text(func.summary);
     $("#funcdesc").empty();
     $("#funcdesc").append(createNodeFromJsDoc(func.description));
@@ -544,12 +553,27 @@ function showMainpage() {
     window.location.hash = "";
     $("#mainpage").show();
     $("#functionpage").hide();
+    $("#logpage").hide();
 }
 
 function showFunctionPage() {
     window.location.hash = "functionPage";
     $("#mainpage").hide();
+    $("#logpage").hide();
     $("#functionpage").show();
+}
+
+function showLogPage() {
+    window.location.hash = "logpage";
+    $("#functionpage").hide();
+    $("#logpage").show();
+    resizeLogPage();
+}
+
+function resizeLogPage() {
+    var h = window.innerHeight;
+    var $l = $("#log");
+    $l.height(h - 10 - $l.offset().top);
 }
 
 /** return:

@@ -1,26 +1,77 @@
 ﻿/// <reference path="thirdparty/jquery-2.1.4.min.js" />
 /// <reference path="thirdparty/json2.js" />
+/// <reference path="thirdparty/tps.js" />
 
 // TODO: javascript intellisense has problem if visual studio project file is not in root folder.
 //       The workaround is to use absolute paths
 
-try {
-    tps.sys.RestartHTA(tps.sys.processOption.requestAdmin | tps.sys.processOption.escapeWOW64);
-} catch (e) { }
-
 var functions = {};
 var activeFunction = null;
 var config = {
-    runhistory: {}
+    runhistory: {},
+    tagfilter: []
 };
 var configfile = shell ? shell.ExpandEnvironmentStrings("%APPDATA%\\jsrunner\\config.js") : "";
 var logfile = shell ? shell.ExpandEnvironmentStrings("%APPDATA%\\jsrunner\\jsrunnerlog.txt") : "";
 
-function Main() {
-    Init();
+$(function(){ main(); });
+
+function main() {
+    /*
+    try {
+        var result = tps.sys.RestartHTA(tps.sys.processOption.requestAdmin | tps.sys.processOption.escapeWOW64);
+        if (result) {
+            return;
+        }
+    } catch (e) { }
+    */
+
     LoadConfig();
-    FillFunctionTableWithFilter("");
+    Init();
+    RefreshFunction();
     tps.util.UpdateProperty(functions, config.runhistory);
+
+    $(document).on('keypress', '.numeric-only', function (e) {
+        if (e.which != 8 && e.which != 0 && (e.which < 48 || e.which > 57)) {
+            //display error message
+            //$("#errmsg").html("Digits Only").show().fadeOut("slow");
+            return false;
+        }
+    });
+
+    /// hide the ugly focus retangle after user click a button
+    $(document).click(function () {
+        if (document.activeElement.tagName == "BUTTON")
+            document.activeElement.blur();
+    });
+
+    $(window).on('hashchange', function () {
+        if (!location.hash) {
+            showMainpage();
+        }
+    });
+}
+
+function callWinapi(dll, func, param){
+    var result = winapi.call(dll, func, param);
+    return JSON.parse(result);
+}
+
+function callWinapiSimple() {
+    var dll = arguments[0];
+    var func = arguments[1];
+    var params = "";
+    for (var i = 2; i < arguments.length; i++) {
+        if (params != "") params += " ";
+        var arg = arguments[i];
+        if (typeof arg === "string") {
+            params += "wstr:" + arg;
+        } else if (typeof arg === "number") {
+            params += "int:" + arg;
+        }
+    }
+
+    return callWinapi(dll, func, params);
 }
 
 function Init() {
@@ -40,8 +91,22 @@ function Init() {
     });
 
     $("#funcfilter").keyup(function () {
-        FillFunctionTableWithFilter($(this).val());
+        RefreshFunction();
     });
+
+    $("#table_layout").click(function () {
+        $("#table_layout").removeClass("btn-default").addClass("btn-primary");
+        $("#wall_layout").removeClass("btn-primary").addClass("btn-default");
+        syncLayout();
+    });
+
+    $("#wall_layout").click(function () {
+        $("#wall_layout").removeClass("btn-default").addClass("btn-primary");
+        $("#table_layout").removeClass("btn-primary").addClass("btn-default");
+        syncLayout();
+    });
+
+    $("#wall_layout").removeClass("btn-default").addClass("btn-primary");
 
     $("#run").bind("click", function () {
         $(this).prop("disabled", true);
@@ -76,6 +141,21 @@ function Init() {
     } catch (e) { }
 
     tps.log.AddHtmlElementDevice($("#log")[0]);
+
+    // change icon
+    try {
+        var result;
+        var icon = callWinapiSimple("user32.dll", "LoadImageW", 0, "C:\\src\\jsrunner\\src\\app.ico", 1, 0, 0, 0x10).retval;
+        var hwnd = callWinapiSimple("user32.dll", "GetForegroundWindow").retval;
+        var parent = callWinapiSimple("user32.dll", "GetWindow", hwnd, 4).retval;
+        callWinapiSimple("user32.dll", "SendMessageW", hwnd, 0x80, 1, icon);
+        callWinapiSimple("user32.dll", "SendMessageW", hwnd, 0x80, 0, icon);
+        callWinapiSimple("user32.dll", "SendMessageW", parent, 0x80, 1, icon);
+        callWinapiSimple("user32.dll", "SendMessageW", parent, 0x80, 0, icon);
+        winapi = null;
+    } catch (e) { }
+
+    initTagFilter();
 }
 
 function LoadConfig() {
@@ -128,6 +208,11 @@ function GetRunnableFunctions() {
     return funcs;
 }
 
+function RefreshFunction() {
+    var filter = $("#funcfilter").val();
+    FillFunctionTableWithFilter(filter);
+}
+
 function FillFunctionTableWithFilter(filter) {
     var filters = filter.split(" ");
     var selected = [];
@@ -144,29 +229,36 @@ function FillFunctionTableWithFilter(filter) {
                 break;
             }
         }
+
+        if (config.tagfilter.length > 0) {
+            match = false;
+            for (var j in config.tagfilter) {
+                if (func.tags.indexOf(config.tagfilter[j]) >= 0) {
+                    match = true;
+                    break;
+                }
+            }
+        }
+
         if (match) {
             selected.push(func);
         }
     }
 
-    FillFunctionTable(selected);
+    $('#mainpage .datatable').remove();
+    $('#mainpage .freewall').remove();
+    $('#mainpage').append(createDataTable(selected));
+    $('#mainpage').append(createCoverWall(selected));
+    syncLayout();
 }
 
-function FillFunctionTable(funcs) {
-    var tbody = $("#functions > tbody");
-    tbody.empty();
-    for (var i in funcs) {
-        var func = funcs[i];
-        tbody.append(
-            $("<tr>").addClass("clickable")
-            .append($("<td>").text(func.name))
-            .append($("<td>").text(func.summary))
-            .click((function (f) {
-                return function () {
-                    ShowFunction(f);
-                    showFunctionPage();
-                }})(func))
-            );
+function syncLayout() {
+    if ($("#table_layout").hasClass("btn-primary")) {
+        $('#mainpage .datatable').show();
+        $('#mainpage .freewall').hide();
+    } else {
+        $('#mainpage .datatable').hide();
+        $('#mainpage .freewall').show();
     }
 }
 
@@ -396,7 +488,7 @@ function ShowFunction(func) {
 
     var spec = "";
     for (var i in func.params) {
-        var div = $("<div>").addClass("input-group");
+        var div = $("<div>").addClass("input-group").addClass("paramdiv");
         $("#paramcontainer").append(div);
 
         var param = func.params[i];
@@ -613,6 +705,12 @@ function parseJsdoc(doc) {
 
             return lineend + 1;
         }
+        else if (doc.startsWith("see ", pos)) {
+            var lineend = doc.indexOf("\n", pos);
+            var tags = doc.substr(pos + 4, lineend - pos - 4);
+            info.tags = tags.split(";");
+            return lineend + 1;
+        }
 
         return -1;
     };
@@ -678,27 +776,271 @@ function isWhiteSpace(ch)
     return ch == ' ' || ch == '\t' || ch == '\n' || ch == '\r';
 }
 
-$(document).ready(function () {
-    Main();
-});
+function createDataTable(db) {
+    var tbl = $('<table>').addClass("table table-striped table-bordered datatable");
 
-$(document).on('keypress', '.numeric-only', function (e) {
-    if (e.which != 8 && e.which != 0 && (e.which < 48 || e.which > 57)) {
-        //display error message
-        //$("#errmsg").html("Digits Only").show().fadeOut("slow");
-        return false;
+    // It's not a good idea to table all properties, we just pick the most useful properties here
+    var properties = ["name", "summary"];
+
+    // create thead
+    var tr = $('<tr>');
+    tbl.append($('<thead>').append(tr));
+    for (var i in properties) {
+        tr.append($('<th>').text(properties[i]).addClass(properties[i]));
     }
-});
 
-/// hide the ugly focus retangle after user click a button
-$(document).click(function () {
-    if (document.activeElement.tagName == "BUTTON")
-        document.activeElement.blur();
-});
-
-$(window).on('hashchange', function () {
-    if (!location.hash) {
-        showMainpage();
+    // create tbody
+    var tbody = $('<tbody>');
+    tbl.append(tbody);
+    for (var i in db) {
+        var item = db[i];
+        var tr = $('<tr>');
+        tbody.append(tr);
+        for (var j in properties) {
+            var p = properties[j];
+            tr.append($('<td>').addClass(p).text(item[p]).addClass(p));
+            tr.click((function (f) {
+                return function () {
+                    if (f.tags.indexOf("direct") >= 0) {
+                        ExecuteFunction(f);
+                    } else {
+                        ShowFunction(f);
+                        showFunctionPage();
+                    }
+                }
+            })(item));
+        }
     }
-});
 
+    if (db.length > 0) {
+        tbl.DataTable({ paging: false, info: false, filter: false, bAutoWidth: false });
+    }
+
+    return tbl;
+}
+
+function imgError(image) {
+    image.onerror = "";
+    image.style.display = 'none';
+    return true;
+}
+
+function hash(s) {
+    var hash = 0;
+    if (s.length == 0) return hash;
+    for (i = 0; i < s.length; i++) {
+        char = s.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash; // Convert to 32bit integer
+    }
+    return hash;
+}
+
+// get a reasonable short name
+function getShortName(name) {
+    return name;
+}
+
+function createCoverWall(db) {
+    var wall = $('<div>').addClass("freewall");
+    for (var i in db) {
+        var item = db[i];
+        var figure = $('<figure>').addClass("app");
+        var imgpath = "images/" + item.name + ".png";
+        var img = $('<img src="' + imgpath + '">');
+        img.error(function (o) {
+            return function () {
+                var colordiv = $('<div>').addClass("appcolorblock");
+                var v = hash(o.name);
+                var r = v & 0xFF;
+                var g = (v >> 8) & 0xFF;
+                var b = (v >> 16) & 0xFF;
+                var hsl = RGBToHSL(r, g, b);
+                //if (hsl[2] < 200) hsl[2] += 55; else hsl[2] -= 55;
+                hsl[2] += 55;
+                var rgb = HSLToRGB(hsl[0], hsl[1], hsl[2]);
+                r2 = Math.round(rgb[0]);
+                g2 = Math.round(rgb[1]);
+                b2 = Math.round(rgb[2]);
+                var rgb1 = "rgb(" + r + "," + g +"," + b + ")";
+                var rgb2 = "rgb(" + r2 + "," + g2 +"," + b2 + ")";
+                //colordiv.css("background-color",  );
+                colordiv.css("background", "linear-gradient(to bottom right, " + rgb1 + ", " + rgb2 + ")");
+                $(this).parent().prepend(colordiv);
+                $(this).hide();
+            }
+        }(item));
+        figure.append(img);
+        var caption = $('<figcaption>');
+        caption.append(getShortName(item.name));
+        figure.append(caption);
+        wall.append(figure);
+
+        figure.click((function (f) {
+            return function () {
+                if (f.tags.indexOf("direct") >= 0) {
+                    ExecuteFunction(f);
+                } else {
+                    ShowFunction(f);
+                    showFunctionPage();
+                }
+            }
+        })(item));
+    }
+    return wall;
+}
+
+function RGBToHSL(r, g, b) {
+    var
+	min = Math.min(r, g, b),
+	max = Math.max(r, g, b),
+	diff = max - min,
+	h = 0, s = 0, l = (min + max) / 2;
+
+    if (diff != 0) {
+        s = l < 0.5 ? diff / (max + min) : diff / (2 - max - min);
+
+        h = (r == max ? (g - b) / diff : g == max ? 2 + (b - r) / diff : 4 + (r - g) / diff) * 60;
+    }
+
+    return [h, s, l];
+}
+
+function HSLToRGB(h, s, l) {
+    if (s == 0) {
+        return [l, l, l];
+    }
+
+    var temp2 = l < 0.5 ? l * (1 + s) : l + s - l * s;
+    var temp1 = 2 * l - temp2;
+
+    h /= 360;
+
+    var
+	rtemp = (h + 1 / 3) % 1,
+	gtemp = h,
+	btemp = (h + 2 / 3) % 1,
+	rgb = [rtemp, gtemp, btemp],
+	i = 0;
+
+    for (; i < 3; ++i) {
+        rgb[i] = rgb[i] < 1 / 6 ? temp1 + (temp2 - temp1) * 6 * rgb[i] : rgb[i] < 1 / 2 ? temp2 : rgb[i] < 2 / 3 ? temp1 + (temp2 - temp1) * 6 * (2 / 3 - rgb[i]) : temp1;
+    }
+
+    return rgb;
+}
+
+
+function updateTagHitCounts(db) {
+    $('#tagfilter > div').each(function() {
+        var count = 0;
+        var tag = $(this).data("tag");
+        for (var i in db) {
+            var item = db[i];
+            var ts = item.tags.split(" ");
+            if (ts.indexOf(tag) >= 0) count++;
+        }
+        $(this).find(".count").text("(" + count + ")");
+    });
+}
+
+function initTagFilter() {
+    var div = $('#tagfilter');
+    var tags = {};
+
+    $.each(functions, function (k, v) {
+        $.each(v.tags, function (i, t) {
+            tags[t] = 1;
+        });
+    });
+
+    for (var i in config.tagfilter) {
+        var tag = config.tagfilter[i];
+        if (!(tag in tags))
+            removeFromArray(config.tagfilter, tag);
+    }
+    SaveConfig();
+
+    for (var t in tags) {
+        var s = $('<div class="tag">');
+        s.append($('<div class="glyphicon glyphicon-tag tagimg"/>'));
+        s.append(t);
+        s.append($('<div class="count">'));
+        if (config.tagfilter.indexOf(t) >= 0) {
+            s.addClass("selected");
+        }
+
+        s.data("tag", t);
+        s.on("click", function() {
+            $(this).toggleClass("selected");
+            if ($(this).hasClass("selected")) {
+                config.tagfilter.push($(this).data("tag"));
+            }
+            else {
+                removeFromArray(config.tagfilter, $(this).data("tag"));
+            }
+            SaveConfig();
+            RefreshFunction();
+        });
+
+        div.append(s);
+        div.append($('<div class="tagspacer">'));
+    }
+
+    layoutTagFilters();
+    $(window).resize(function(){
+        layoutTagFilters();
+    });
+}
+
+function layoutTagFilters() {
+    var div = $('#tagfilter');
+    // div.width() will return a rounded value, which sometimes is not accurate
+    var w = div[0].getBoundingClientRect().width;
+    var tags = div.find(".tag");
+    var spacers = div.find(".tagspacer");
+    var e = tags.outerWidth();
+
+    spacers.show();
+
+    // e * cols + (cols-1) * 5 < w
+    var cols = Math.floor((w + 5) / (e + 5));
+    if (cols == 0) {
+        spacers.width(0);
+        spacers.hide();
+        return;
+    } else if (cols == 1) {
+        // set spacer width + tag width == w - 1 to make sure line break
+        spacers.width(w - 1 - e);
+        return;
+    }
+
+    var totalspace = w - e * cols;
+    var count = tags.length;
+    var singlespace = Math.floor(totalspace / (cols - 1));
+    var reminder = totalspace % (cols - 1);
+
+    console.log("div resize: " + w + "," + e);
+    console.log("cols: "+ cols + ", spaces: " + totalspace + "," + singlespace);
+
+    for (var i = 0; i < count; i++) {
+        var col = i % cols;
+        var space = singlespace;
+        if (col == cols - 1) {
+            space = 0;
+        } else if (col >= cols - 1 - reminder) {
+            space = singlespace + 1;
+        }
+
+        spacers.eq(i).width(space);
+    }
+}
+
+function removeFromArray(a, b) { 
+    var pos = a.indexOf(b);
+    if (pos >= 0) {
+        a.splice(pos, 1); 
+        return true; 
+    } 
+    return false;
+}

@@ -21,8 +21,8 @@
     <None Include="app.css" />
     <None Include="app.html" />
     <None Include="app.js" />
-    <None Include="sample.js" />
     <None Include="thirdparty\tps.js" />
     <None Include="..\scripts\windev_functions.js" />
+    <None Include="..\scripts\sample.js" />
   </ItemGroup>
 </Project>

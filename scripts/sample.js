@@ -1,3 +1,7 @@
+// we use jsdoc style comment to annotate functions
+// use @see to annotate tags
+
+
 function TestFunction1(name, value) {
     /** Test function description here
      *  
@@ -30,6 +34,8 @@ function Fabonacci(n, x) {
         a = b;
         b = c;
     }
+
+    tps.log.Debug("Fabonacci");
 
     return b;
 }

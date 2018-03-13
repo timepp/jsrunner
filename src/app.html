@@ -3,10 +3,10 @@
 <head>
     <title>Task Runner</title>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <script type="text/javascript" src="thirdparty/jquery-2.1.4.min.js"></script>
+    <script type="text/javascript" src="thirdparty/jquery-1.12.0.min.js"></script>
 
     <link rel="stylesheet" href="thirdparty/bootstrap.min.css" />
     <script src="thirdparty/bootstrap.min.js"></script>
@@ -14,12 +14,15 @@
     <link rel="stylesheet" href="thirdparty/bootstrap-select.min.css">
     <script src="thirdparty/bootstrap-select.min.js"></script>
 
+    <script type="text/javascript" language="javascript" src="thirdparty/jquery.dataTables.min.js"> </script>
+    <script type="text/javascript" language="javascript" src="thirdparty/dataTables.bootstrap.min.js"> </script>
+    <link rel="stylesheet" href="thirdparty/dataTables.bootstrap.min.css">
+
     <link rel="stylesheet" href="app.css" />
     <script src="thirdparty/tps.js"></script>
     <script src="thirdparty/json2.js"></script>
     <script src="app.js"></script>
 
-    <!-- put any js functions you want to run with UI below -->
     <script type="text/javascript" src="../scripts/windev_functions.js"></script>
     <script type="text/javascript" src="../scripts/sample.js"></script>
 
@@ -29,24 +32,25 @@
     <div id="mainpage">
 
         <div class="input-group" id="filter">
-            <span class="input-group-addon">Filter:</span>
+            <span class="input-group-addon">filter:</span>
             <input id="funcfilter" class="form-control" type="text" />
         </div>
 
-        <br />
+        <div id="tagfilter">
+        </div>
+  
+        <hr class="neck"/>
 
-        <table id="functions">
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>Description</th>
-                </tr>
-            </thead>
-            <tbody>
-            </tbody>
-        </table>
+        <div class="input-group">
+            <span class="input-group-btn">
+                <button id="table_layout" class="btn btn-default"> <span class="glyphicon glyphicon-th-list" aria-hidden="true"></span> </button>
+                <button id="wall_layout" class="btn btn-default"> <span class="glyphicon glyphicon-th-large" aria-hidden="true"></span> </button>
+            </span>
+        </div>
 
     </div>
+
+    <br />
 
     <div id="functionpage" style="display:none">
         <div class="input-group">
@@ -75,12 +79,13 @@
         <br />
 
         <div class="panel panel-default" id="resultpanel">
-            <div class="panel-heading clearfix"><b>Result</b>
-                <button id="viewlog" class="btn btn-default pull-right">
-                    <span class="glyphicon glyphicon-info-sign" aria-hidden="true"></span>
-                </button>
+            <div class="panel-heading"><b>Result</b> (<a id="viewlog">view log here</a>)
+                <!-- <button id="viewlog" class="btn btn-default pull-right"> -->
+                <!--     <span class="glyphicon glyphicon-info-sign" aria-hidden="true"></span> -->
+                <!-- </button> -->
             </div>
-            <div class="panel-body" id="result"></div>
+            <div class="panel-body" id="result">
+            </div>
         </div>
         
     </div>

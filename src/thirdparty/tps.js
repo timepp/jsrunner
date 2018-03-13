@@ -16,7 +16,9 @@ try {
     var net = new ActiveXObject("WScript.Network");
     var shellapp = new ActiveXObject("Shell.Application");
     var env = shell.Environment("Process");
+    // todo: this line will block hta to close
     var winapi = new ActiveXObject("CallDll");
+    
 } catch (e) { }
 
 var HKEY_LOCAL_MACHINE = 0x80000002;
@@ -103,6 +105,8 @@ if (typeof String.prototype.splitTail !== 'function') {
     };
 }
 
+var keypressed = {};
+
 (function () {
 
     var ForReading = 1, ForWriting = 2, ForAppending = 8;
@@ -112,6 +116,29 @@ if (typeof String.prototype.splitTail !== 'function') {
     // tps.util ============================================================================================================================
     // tps.util ============================================================================================================================
     // tps.util ============================================================================================================================
+
+    if (document) {
+        document.onkeydown = function(evt) {
+            evt = evt || window.event;
+        
+            // Ensure we only handle printable keys
+            var charCode = typeof evt.which == "number" ? evt.which : evt.keyCode;
+        
+            if (charCode) {
+                keypressed[charCode] = true;
+            }
+        };
+        document.onkeyup = function(evt) {
+            evt = evt || window.event;
+        
+            // Ensure we only handle printable keys
+            var charCode = typeof evt.which == "number" ? evt.which : evt.keyCode;
+        
+            if (charCode) {
+                keypressed[charCode] = false;
+            }
+        };
+    }
 
     tps.util = {
         SingleQuote: function (str) {
@@ -468,7 +495,11 @@ if (typeof String.prototype.splitTail !== 'function') {
             }
         },
 
-        RunCommandAndGetResult: function (cmdline, of, ef) {
+        RunCommandAndGetResult: function (cmdline, of, ef, showcmd, encoding) {
+            if (showcmd === null || showcmd === undefined) {
+                showcmd = 0;
+            }
+
             var outfile = of ? of : shell.ExpandEnvironmentStrings("%temp%") + "\\" + fso.GetTempName();
             var errfile = ef ? ef : shell.ExpandEnvironmentStrings("%temp%") + "\\" + fso.GetTempName();
 
@@ -479,10 +510,10 @@ if (typeof String.prototype.splitTail !== 'function') {
 
             cmdline = "cmd.exe /C " + cmdline + ' > "OUT" 2> "ERR"'.replace("OUT", outfile).replace("ERR", errfile);
             tps.log.Debug("RUN:[" + cmdline + "]");
-            var returnValue = shell.Run(cmdline, 0, true);
+            var returnValue = shell.Run(cmdline, showcmd, true);
             var ret = {
-                output: tps.file.ReadTextFileSimple(outfile),
-                errors: tps.file.ReadTextFileSimple(errfile),
+                output: encoding? tps.file.ReadTextFile(outfile, encoding) : tps.file.ReadTextFileSimple(outfile),
+                errors: encoding? tps.file.ReadTextFile(errfile, encoding) : tps.file.ReadTextFileSimple(errfile),
                 retval: returnValue
             };
 
@@ -492,6 +523,10 @@ if (typeof String.prototype.splitTail !== 'function') {
             } catch (e) {}
 
             return ret;
+        },
+
+        Sleep: function (seconds) {
+            shell.Run("timeout /T {0} /nobreak".format(seconds), 0, true);
         }
     };
 

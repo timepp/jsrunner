@@ -94,44 +94,44 @@ td.shrink {
     color: white;
 }
 
+div.freewall {
+
+}
+
+
+div.freewall figure {
+    padding: 10px;
+    margin: 5px;
+    background: #fefefe;
+    display: inline-block;
+    column-break-inside: avoid;
+    cursor: pointer;
+    text-align: center;
+    vertical-align: middle;
+}
+
+div.freewall figure:hover {
+    background: lime;
+}
+
+
+div.freewall figure img {
+    width: 144px; 
+    height: 144px;
+    cursor: pointer;
+}
+
 .appcolorblock {
     border: solid 1px #A0A0A0;
     border-radius: 5px;
     display: inline-block;
-    width: 100%;
-    height: 150px;
-}
-
-div.freewall {
-    columns: auto 200px;
-    column-gap: 1em;
-    width: 100%;
-    margin: 5px auto;
-}
-
-div.freewall figure {
-    width: 100%;
-    background: #fefefe;
-    border: 2px solid #eee;
-    padding: 5px;
-    transition: opacity .4s ease-in-out;
-    margin-bottom: 5%;
-    display: inline-block;
-    column-break-inside: avoid;
-    cursor: pointer;
-}
-
-div.freewall figure img {
-    width: 100%; 
-    height: auto;
-    cursor: pointer;
+    width: 144px;
+    height: 144px;
 }
 
 div.freewall figure figcaption {
-    font-size: normal;
     color: #444;
-    line-height: 1.5;
-    margin-top: 10px;
+    vertical-align: bottom;
 }
 
 hr.neck {

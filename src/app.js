@@ -13,6 +13,7 @@ var config = {
 };
 var configfile = shell ? shell.ExpandEnvironmentStrings("%APPDATA%\\jsrunner\\config.js") : "";
 var logfile = shell ? shell.ExpandEnvironmentStrings("%APPDATA%\\jsrunner\\jsrunnerlog.txt") : "";
+var showLegacy = false;
 
 $(function(){ main(); });
 
@@ -200,8 +201,10 @@ function GetRunnableFunctions() {
             var jsdoc = extractJsdocOfFunction(func);
             if (jsdoc != null) {
                 var info = parseJsdoc(jsdoc);
-                info.name = fn;
-                funcs[fn] = info;
+                if (showLegacy || info.tags.indexOf("Legacy") == -1) {
+                    info.name = fn;
+                    funcs[fn] = info;
+                }
             }
         }
     }
